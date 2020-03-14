@@ -1490,6 +1490,40 @@ class ZigbeeAdapter extends Adapter {
       return;
     }
 
+    if (node.endpointHasZhaInputClusterIdHex(endpoint,
+                                             CLUSTER_ID.DOORLOCK_HEX)) {
+      if (node.hasOwnProperty('numOfTotalUsersSupported') &&
+          node.hasOwnProperty('numOfPinUsersSupported') &&
+          node.hasOwnProperty('numOfYearDaySchedulesSupportedPerUser') &&
+          node.hasOwnProperty('maxPinLen') &&
+          node.hasOwnProperty('minPinLen')) {
+        this.setClassifierAttributesPopulated(node, endpointNum);
+      } else {
+        if (DEBUG_flow) {
+          console.log('populateClassifierAttributes has no doorLockAttr',
+                      'querying via read');
+        }
+        const readFrame = node.makeReadAttributeFrame(
+          node.doorLockEndpoint,
+          PROFILE_ID.ZHA,
+          CLUSTER_ID.DOORLOCK,
+          [
+            ATTR_ID.DOORLOCK.NUMOFTOTALUSERSSUPPORTED,
+            ATTR_ID.DOORLOCK.NUMOFPINUSERSSUPPORTED,
+            ATTR_ID.DOORLOCK.NUMOFYEARDAYSCHEDULESSUPPORTEDPERUSER,
+            ATTR_ID.DOORLOCK.MAXPINLEN,
+            ATTR_ID.DOORLOCK.MINPINLEN,
+          ]);
+        this.sendFrameWaitFrameAtFront(readFrame, {
+          type: this.driver.getExplicitRxFrameType(),
+          zclCmdId: 'readRsp',
+          zclSeqNum: readFrame.zcl.seqNum,
+          callback: this.populateClassifierAttributesDoorLock.bind(this),
+        });
+      }
+      return;
+    }
+
     // Since we got to here, this endpoint doesn't need any classifier
     // attributes
     this.setClassifierAttributesPopulated(node, endpointNum);
@@ -1522,6 +1556,27 @@ class ZigbeeAdapter extends Adapter {
     if (node) {
       node.handleIasReadResponse(frame);
     }
+  }
+
+  populateClassifierAttributesDoorLock(frame) {
+    const node = this.nodes[frame.remote64];
+    if (!node) {
+      return;
+    }
+    node.handleGenericZclReadRsp(frame);
+    if (DEBUG_flow) {
+      console.log('populateClassifierAttributesDoorLock:',
+                  ' numOfTotalUsersSupported = ',
+                  node.numOfTotalUsersSupported,
+                  '; numOfPinUsersSupported = ', node.numOfPinUsersSupported,
+                  '; numOfYearDaySchedulesSupportedPerUser = ',
+                  node.numOfYearDaySchedulesSupportedPerUser,
+                  '; maxPinLen = ', node.maxPinLen,
+                  '; minPinLen = ', node.minPinLen);
+    }
+    // The sourceEndpoint comes back as a hex string. Convert it to decimal
+    const sourceEndpoint = parseInt(frame.sourceEndpoint, 16);
+    this.setClassifierAttributesPopulated(node, sourceEndpoint);
   }
 
   setClassifierAttributesPopulated(node, endpointNum) {
@@ -1585,6 +1640,9 @@ class ZigbeeAdapter extends Adapter {
     node.ssIasZoneEndpoint =
       node.findZhaEndpointWithInputClusterIdHex(
         CLUSTER_ID.SSIASZONE_HEX);
+    node.doorLockEndpoint =
+        node.findZhaEndpointWithInputClusterIdHex(
+          CLUSTER_ID.DOORLOCK_HEX);
 
     // Since we got here, all of the simple descriptors have been populated.
     // Check to see that we have all of the classifier attributes

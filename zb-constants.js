@@ -185,6 +185,13 @@ makeAttrIds('SSIASZONE', [
   'iasCieAddr',   // 16 (0x10)
   'zoneId',       // 17 (0x11)
 ]);
+makeAttrIds('DOORLOCK', [
+  'numOfTotalUsersSupported',               // 17
+  'numOfPinUsersSupported',                 // 18
+  'numOfYearDaySchedulesSupportedPerUser',  // 21
+  'maxPinLen',                              // 23
+  'minPinLen',                              // 24
+]);
 
 // COLOR_CAPABILITY describes values for the colorCapability attribute from
 // the lightingColorCtrl cluster.

@@ -901,6 +901,26 @@ class ZigbeeNode extends Device {
               break;
           }
           break;
+
+        case CLUSTER_ID.DOORLOCK_HEX:
+          switch (attrEntry.attrId) {
+            case ATTR_ID.DOORLOCK.NUMOFTOTALUSERSSUPPORTED:
+              this.numOfTotalUsersSupported = attrEntry.attrData;
+              break;
+            case ATTR_ID.DOORLOCK.NUMOFPINUSERSSUPPORTED:
+              this.numOfPinUsersSupported = attrEntry.attrData;
+              break;
+            case ATTR_ID.DOORLOCK.NUMOFYEARDAYSCHEDULESSUPPORTEDPERUSER:
+              this.numOfYearDaySchedulesSupportedPerUser = attrEntry.attrData;
+              break;
+            case ATTR_ID.DOORLOCK.MAXPINLEN:
+              this.maxPinLen = attrEntry.attrData;
+              break;
+            case ATTR_ID.DOORLOCK.MINPINLEN:
+              this.minPinLen = attrEntry.attrData;
+              break;
+          }
+          break;
       }
     }
   }
